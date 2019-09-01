@@ -1,0 +1,4 @@
+drone-convert-starlark
+drone-convert-starlark.exe
+release/*
+.env
