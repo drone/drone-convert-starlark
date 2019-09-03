@@ -25,6 +25,6 @@ $ docker run -d \
 Update your Drone server configuration to include the plugin address and the shared secret.
 
 ```text
-DRONE_CONVERTER_ENDPOINT=http://1.2.3.4:3000
-DRONE_CONVERTER_SECRET=bea26a2221fd8090ea38720fc445eca6
+DRONE_CONVERT_PLUGIN_ENDPOINT=http://1.2.3.4:3000
+DRONE_CONVERT_PLUGIN_SECRET=bea26a2221fd8090ea38720fc445eca6
 ```
