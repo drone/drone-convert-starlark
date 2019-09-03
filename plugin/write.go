@@ -5,14 +5,20 @@
 package plugin
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 
 	"go.starlark.net/starlark"
 )
 
-func write(out *bytes.Buffer, v starlark.Value) error {
+type writer interface {
+	io.Writer
+	io.ByteWriter
+	io.StringWriter
+}
+
+func write(out writer, v starlark.Value) error {
 	if marshaler, ok := v.(json.Marshaler); ok {
 		jsonData, err := marshaler.MarshalJSON()
 		if err != nil {

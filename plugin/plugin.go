@@ -21,6 +21,9 @@ const (
 	newline   = "\n"
 )
 
+// limits generated configuration file size.
+const limit = 1000000
+
 var (
 	// ErrMainMissing indicates the starlark script is missing
 	// the main method.
@@ -33,6 +36,10 @@ var (
 	// ErrMainReturn indicates the starlark script's main method
 	// returns an invalid or unexpected type.
 	ErrMainReturn = errors.New("starlark: main returns an invalid type")
+
+	// ErrMaximumSize indicates the starlark script generated a
+	// file that exceeds the maximum allowed file size.
+	ErrMaximumSize = errors.New("starlark: maximum file size exceeded")
 )
 
 // New returns a new converter plugin.
@@ -95,6 +102,12 @@ func (p *plugin) Convert(ctx context.Context, req *converter.Request) (*drone.Co
 		}
 	default:
 		return nil, ErrMainReturn
+	}
+
+	// this is a temporary workaround until we
+	// implement a LimitWriter.
+	if b := buf.Bytes(); len(b) > limit {
+		return nil, ErrMaximumSize
 	}
 
 	return &drone.Config{
