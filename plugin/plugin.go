@@ -12,6 +12,7 @@ import (
 
 	"github.com/drone/drone-go/drone"
 	"github.com/drone/drone-go/plugin/converter"
+	"github.com/sirupsen/logrus"
 
 	"go.starlark.net/starlark"
 )
@@ -40,6 +41,10 @@ var (
 	// ErrMaximumSize indicates the starlark script generated a
 	// file that exceeds the maximum allowed file size.
 	ErrMaximumSize = errors.New("starlark: maximum file size exceeded")
+
+	// ErrCannotLoad indicates the starlark script is attempting to
+	// load an external file which is currently restricted.
+	ErrCannotLoad = errors.New("starlark: cannot load external scripts")
 )
 
 // New returns a new converter plugin.
@@ -58,7 +63,16 @@ func (p *plugin) Convert(ctx context.Context, req *converter.Request) (*drone.Co
 		return nil, nil
 	}
 
-	thread := &starlark.Thread{Name: "drone"}
+	thread := &starlark.Thread{
+		Name: "drone",
+		Load: noLoad,
+		Print: func(_ *starlark.Thread, msg string) {
+			logrus.WithFields(logrus.Fields{
+				"namespace": req.Repo.Namespace,
+				"name":      req.Repo.Name,
+			}).Traceln(msg)
+		},
+	}
 	globals, err := starlark.ExecFile(thread, req.Repo.Config, []byte(req.Config.Data), nil)
 	if err != nil {
 		return nil, err
@@ -126,4 +140,8 @@ func isStarlark(name string) bool {
 	default:
 		return false
 	}
+}
+
+func noLoad(_ *starlark.Thread, _ string) (starlark.StringDict, error) {
+	return nil, ErrCannotLoad
 }

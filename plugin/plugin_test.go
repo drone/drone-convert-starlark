@@ -116,3 +116,30 @@ func TestPlugin_Multi(t *testing.T) {
 		t.Errorf("Want %q got %q", want, got)
 	}
 }
+
+func TestPlugin_NoLoading(t *testing.T) {
+	before, err := ioutil.ReadFile("testdata/load.star")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	req := &converter.Request{
+		Build: drone.Build{
+			After: "3d21ec53a331a6f037a91c368710b99387d012c1",
+		},
+		Repo: drone.Repo{
+			Slug:   "octocat/hello-world",
+			Config: ".drone.star",
+		},
+		Config: drone.Config{
+			Data: string(before),
+		},
+	}
+
+	plugin := New()
+	_, err = plugin.Convert(noContext, req)
+	if err == nil {
+		t.Errorf("Want ErrCannotLoad got nil")
+	}
+}
