@@ -38,7 +38,7 @@ func TestPlugin(t *testing.T) {
 		return
 	}
 	if config != nil {
-		t.Error("Want nil config when configuration is not startlark file")
+		t.Error("Want nil config when configuration is not starlark file")
 		return
 	}
 

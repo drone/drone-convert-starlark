@@ -129,7 +129,7 @@ func (p *plugin) Convert(ctx context.Context, req *converter.Request) (*drone.Co
 	}, nil
 }
 
-// helper function returns return if the configuration file
+// helper function returns true if the configuration file
 // is in Starlark format.
 func isStarlark(name string) bool {
 	switch {

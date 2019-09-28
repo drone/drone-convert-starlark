@@ -47,7 +47,7 @@ func fromBuild(v drone.Build) starlark.StringDict {
 		"event":         starlark.String(v.Event),
 		"action":        starlark.String(v.Action),
 		"cron":          starlark.String(v.Cron),
-		"environent":    starlark.String(v.Deploy),
+		"environment":   starlark.String(v.Deploy),
 		"link":          starlark.String(v.Link),
 		"branch":        starlark.String(v.Target),
 		"source":        starlark.String(v.Source),
