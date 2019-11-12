@@ -37,3 +37,18 @@ Update your Drone server configuration to include the plugin address and the sha
 DRONE_CONVERT_PLUGIN_ENDPOINT=http://1.2.3.4:3000
 DRONE_CONVERT_PLUGIN_SECRET=bea26a2221fd8090ea38720fc445eca6
 ```
+
+## Testing
+
+You can test the extension using the command line utility. Provide the command line utility with the conversion extension endpoint and secret.
+
+```text
+$ export DRONE_CONVERT_ENDPOINT=http://1.2.3.4:3000
+$ export DRONE_CONVERT_SECRET=bea26a2221fd8090ea38720fc445eca6
+```
+
+Convert the Starlark file to a yaml configuration file:
+
+```
+$ drone plugins convert path/to/.drone.star
+```
