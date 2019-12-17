@@ -7,9 +7,10 @@ package main
 import (
 	"net/http"
 
+	"github.com/drone/drone-convert-starlark/plugin/starlark/repo"
+
 	"github.com/drone/drone-convert-starlark/plugin"
 	"github.com/drone/drone-go/plugin/converter"
-
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/sirupsen/logrus"
@@ -17,9 +18,10 @@ import (
 
 // spec provides the plugin settings.
 type spec struct {
-	Bind   string `envconfig:"DRONE_BIND"`
-	Debug  bool   `envconfig:"DRONE_DEBUG"`
-	Secret string `envconfig:"DRONE_SECRET"`
+	Bind              string            `envconfig:"DRONE_BIND"`
+	Debug             bool              `envconfig:"DRONE_DEBUG"`
+	Secret            string            `envconfig:"DRONE_SECRET"`
+	StarlarkRepoPaths map[string]string `envconfig:"DRONE_STARLARK_REPO_PATHS"`
 }
 
 func main() {
@@ -28,7 +30,6 @@ func main() {
 	if err != nil {
 		logrus.Fatal(err)
 	}
-
 	if spec.Debug {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
@@ -39,14 +40,27 @@ func main() {
 		spec.Bind = ":3000"
 	}
 
+	repoRegistry := repo.NewRegistry()
+	if len(spec.StarlarkRepoPaths) == 0 {
+		logrus.Infoln("starlark extension loading disabled")
+	} else {
+		logrus.Infoln("starlark extension loading enabled")
+		logrus.Infoln("defined extension repositories:")
+		for repoName, repoPath := range spec.StarlarkRepoPaths {
+			if err := repoRegistry.Add(repoName, repoPath); err != nil {
+				logrus.Fatalln("unable to add starlark repo:", err)
+			}
+			logrus.Infof("  @%s = %s\n", repoName, repoPath)
+		}
+	}
+
 	handler := converter.Handler(
-		plugin.New(),
+		plugin.New(repoRegistry),
 		spec.Secret,
 		logrus.StandardLogger(),
 	)
 
 	logrus.Infof("server listening on address %s", spec.Bind)
-
 	http.Handle("/", handler)
 	logrus.Fatal(http.ListenAndServe(spec.Bind, nil))
 }

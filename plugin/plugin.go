@@ -8,12 +8,13 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"strings"
 
+	"github.com/drone/drone-convert-starlark/plugin/starlark/repo"
+
+	"github.com/drone/drone-convert-starlark/plugin/starlark/extension"
 	"github.com/drone/drone-go/drone"
 	"github.com/drone/drone-go/plugin/converter"
 	"github.com/sirupsen/logrus"
-
 	"go.starlark.net/starlark"
 )
 
@@ -42,30 +43,31 @@ var (
 	// file that exceeds the maximum allowed file size.
 	ErrMaximumSize = errors.New("starlark: maximum file size exceeded")
 
-	// ErrCannotLoad indicates the starlark script is attempting to
-	// load an external file which is currently restricted.
-	ErrCannotLoad = errors.New("starlark: cannot load external scripts")
+	// ErrLoadingDisabled indicates the starlark script is attempting to
+	// load an external file while extension loading is disabled.
+	ErrLoadingDisabled = errors.New("starlark: extension loading is disabled")
 )
 
-// New returns a new converter plugin.
-func New() converter.Plugin {
-	return new(plugin)
+// NewRegistry returns a new converter plugin.
+func New(repoRegistry *repo.Registry) converter.Plugin {
+	return &plugin{repoRegistry: repoRegistry}
 }
 
 type plugin struct {
+	repoRegistry *repo.Registry
 }
 
 func (p *plugin) Convert(ctx context.Context, req *converter.Request) (*drone.Config, error) {
 	// if the file is not a Starlark script return no-content.
 	// this will instruct the caller to use the configuration
 	// file as-is.
-	if !isStarlark(req.Repo.Config) {
+	if !extension.IsValidFilename(req.Repo.Config) {
 		return nil, nil
 	}
 
 	thread := &starlark.Thread{
 		Name: "drone",
-		Load: noLoad,
+		Load: p.loadExtension,
 		Print: func(_ *starlark.Thread, msg string) {
 			logrus.WithFields(logrus.Fields{
 				"namespace": req.Repo.Namespace,
@@ -129,19 +131,17 @@ func (p *plugin) Convert(ctx context.Context, req *converter.Request) (*drone.Co
 	}, nil
 }
 
-// helper function returns true if the configuration file
-// is in Starlark format.
-func isStarlark(name string) bool {
-	switch {
-	case strings.HasSuffix(name, ".star"):
-		return true
-	case strings.HasSuffix(name, ".starlark"):
-		return true
-	default:
-		return false
+func (p *plugin) loadExtension(t *starlark.Thread, labelStr string) (starlark.StringDict, error) {
+	if p.repoRegistry.Len() == 0 {
+		return nil, ErrLoadingDisabled
 	}
-}
 
-func noLoad(_ *starlark.Thread, _ string) (starlark.StringDict, error) {
-	return nil, ErrCannotLoad
+	logrus.Debugln("attempting to load extension", labelStr)
+	loaded, err := extension.Load(t, p.repoRegistry, labelStr)
+	if err != nil {
+		logrus.Debugln("error while loading extension:", err)
+		return nil, err
+	}
+	logrus.Debugln("successfully loaded extension", labelStr)
+	return loaded, err
 }
