@@ -10,6 +10,7 @@ import (
 	"github.com/drone/drone-convert-starlark/plugin/starlark/repo"
 
 	"github.com/drone/drone-convert-starlark/plugin"
+	"github.com/drone/drone-convert-starlark/server"
 	"github.com/drone/drone-go/plugin/converter"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/kelseyhightower/envconfig"
@@ -59,8 +60,10 @@ func main() {
 		spec.Secret,
 		logrus.StandardLogger(),
 	)
+	healthzHandler := server.HandleHealthz()
 
 	logrus.Infof("server listening on address %s", spec.Bind)
 	http.Handle("/", handler)
+	http.Handle("/healthz", healthzHandler)
 	logrus.Fatal(http.ListenAndServe(spec.Bind, nil))
 }
