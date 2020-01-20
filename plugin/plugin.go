@@ -8,6 +8,9 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"time"
+
+	"github.com/drone/drone-convert-starlark/metrics"
 
 	"github.com/drone/drone-convert-starlark/plugin/starlark/repo"
 
@@ -57,6 +60,17 @@ type plugin struct {
 	repoRegistry *repo.Registry
 }
 
+func (p *plugin) recordSuccess(convertStart time.Time) {
+	convertEnd := time.Now()
+	convertDuration := convertEnd.Sub(convertStart)
+	metrics.ConversionLatency.Observe(convertDuration.Seconds())
+	metrics.ConversionSuccessCount.Inc()
+}
+
+func (p *plugin) recordFail() {
+	metrics.ConversionFailCount.Inc()
+}
+
 func (p *plugin) Convert(ctx context.Context, req *converter.Request) (*drone.Config, error) {
 	// if the file is not a Starlark script return no-content.
 	// this will instruct the caller to use the configuration
@@ -65,6 +79,21 @@ func (p *plugin) Convert(ctx context.Context, req *converter.Request) (*drone.Co
 		return nil, nil
 	}
 
+	convertStart := time.Now()
+	metrics.ConversionCount.Inc()
+	droneCfg, err := p.doConversion(ctx, req)
+	if err != nil {
+		p.recordFail()
+		return nil, err
+	}
+
+	// Only report timings on success, since timings for failures may be
+	// much different (ex: syntax error stopping execution before a load().
+	p.recordSuccess(convertStart)
+	return droneCfg, nil
+}
+
+func (p *plugin) doConversion(ctx context.Context, req *converter.Request) (*drone.Config, error) {
 	thread := &starlark.Thread{
 		Name: "drone",
 		Load: p.loadExtension,
@@ -75,14 +104,15 @@ func (p *plugin) Convert(ctx context.Context, req *converter.Request) (*drone.Co
 			}).Traceln(msg)
 		},
 	}
+
+	// This starts the parsing (and possibly loads/imports).
 	globals, err := starlark.ExecFile(thread, req.Repo.Config, []byte(req.Config.Data), nil)
 	if err != nil {
 		return nil, err
 	}
 
-	// find the main method in the starlark script and
-	// cast to a callable type. If not callable the script
-	// is invalid.
+	// find the main method in the starlark script and  cast to a callable type.
+	// If not callable the script is invalid.
 	mainVal, ok := globals["main"]
 	if !ok {
 		return nil, ErrMainMissing
@@ -92,8 +122,7 @@ func (p *plugin) Convert(ctx context.Context, req *converter.Request) (*drone.Co
 		return nil, ErrMainInvalid
 	}
 
-	// create the input args and invoke the main method
-	// using the input args.
+	// create the input args and invoke the main method using the input args.
 	args := createArgs(req.Repo, req.Build)
 	mainVal, err = starlark.Call(thread, main, args, nil)
 	if err != nil {
@@ -142,6 +171,7 @@ func (p *plugin) loadExtension(t *starlark.Thread, labelStr string) (starlark.St
 		logrus.Debugln("error while loading extension:", err)
 		return nil, err
 	}
+
 	logrus.Debugln("successfully loaded extension", labelStr)
 	return loaded, err
 }

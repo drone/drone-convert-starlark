@@ -5,6 +5,7 @@
 package main
 
 import (
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"net/http"
 
 	"github.com/drone/drone-convert-starlark/plugin/starlark/repo"
@@ -65,5 +66,6 @@ func main() {
 	logrus.Infof("server listening on address %s", spec.Bind)
 	http.Handle("/", handler)
 	http.Handle("/healthz", healthzHandler)
+	http.Handle("/metrics", promhttp.Handler())
 	logrus.Fatal(http.ListenAndServe(spec.Bind, nil))
 }
