@@ -24,7 +24,7 @@ const (
 )
 
 // limits generated configuration file size.
-const limit = 1000000
+const limit = 2000000
 
 var (
 	// ErrMainMissing indicates the starlark script is missing
