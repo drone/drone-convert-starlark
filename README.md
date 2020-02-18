@@ -76,7 +76,7 @@ $ export DRONE_CONVERT_ENDPOINT=http://1.2.3.4:3000
 $ export DRONE_CONVERT_SECRET=bea26a2221fd8090ea38720fc445eca6
 ```
 
-Use the command line utility to convert the Starlar script:
+Use the command line utility to convert the Starlark script:
 
 ```
 $ drone plugins convert path/to/.drone.star
