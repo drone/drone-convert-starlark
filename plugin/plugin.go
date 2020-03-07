@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/drone/drone-convert-starlark/plugin/starlark/repo"
 
@@ -77,7 +78,7 @@ func (p *plugin) Convert(ctx context.Context, req *converter.Request) (*drone.Co
 	}
 	globals, err := starlark.ExecFile(thread, req.Repo.Config, []byte(req.Config.Data), nil)
 	if err != nil {
-		return nil, err
+		return nil, prettyStarlarkError(err)
 	}
 
 	// find the main method in the starlark script and
@@ -97,7 +98,7 @@ func (p *plugin) Convert(ctx context.Context, req *converter.Request) (*drone.Co
 	args := createArgs(req.Repo, req.Build)
 	mainVal, err = starlark.Call(thread, main, args, nil)
 	if err != nil {
-		return nil, err
+		return nil, prettyStarlarkError(err)
 	}
 
 	buf := new(bytes.Buffer)
@@ -144,4 +145,13 @@ func (p *plugin) loadExtension(t *starlark.Thread, labelStr string) (starlark.St
 	}
 	logrus.Debugln("successfully loaded extension", labelStr)
 	return loaded, err
+}
+
+// prettyStarlarkError returns a suitable human readable error for a
+// starlark.Exec error or returns the error unmodified.
+func prettyStarlarkError(err error) error {
+	if err, ok := err.(*starlark.EvalError); ok {
+		return fmt.Errorf("starlark evaluation error:\n%s", err.Backtrace())
+	}
+	return err
 }

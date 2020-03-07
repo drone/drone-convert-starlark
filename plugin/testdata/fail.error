@@ -1,0 +1,7 @@
+starlark evaluation error:
+Traceback (most recent call last):
+  fail.star:2:8: in main
+  fail.star:5:8: in fn1
+  fail.star:8:9: in fn2
+  <builtin>: in fail
+Error: fail: fail-message
