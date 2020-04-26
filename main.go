@@ -19,6 +19,7 @@ import (
 type spec struct {
 	Bind   string `envconfig:"DRONE_BIND"`
 	Debug  bool   `envconfig:"DRONE_DEBUG"`
+	Trace  bool   `envconfig:"DRONE_TRACE"`
 	Secret string `envconfig:"DRONE_SECRET"`
 }
 
@@ -31,6 +32,9 @@ func main() {
 
 	if spec.Debug {
 		logrus.SetLevel(logrus.DebugLevel)
+	}
+	if spec.Trace {
+		logrus.SetLevel(logrus.TraceLevel)
 	}
 	if spec.Secret == "" {
 		logrus.Fatalln("missing secret key")
