@@ -19,16 +19,14 @@ import (
 // TODO(bradrydzewski) add repository synced
 // TODO(bradrydzewski) add repository version
 
-// TODO(bradrydzewski) add build id
-// TODO(bradrydzewski) add build number
+// TODO(bradrydzewski) add build id, will always be zero value
+// TODO(bradrydzewski) add build number, will always be zero value
+// TODO(bradrydzewski) add build started, will always be zero value
+// TODO(bradrydzewski) add build finished, will always be zero value
+// TODO(bradrydzewski) add build created, will always be zero value
+// TODO(bradrydzewski) add build updated, will always be zero value
 // TODO(bradrydzewski) add build parent
 // TODO(bradrydzewski) add build timestamp
-// TODO(bradrydzewski) add build started
-// TODO(bradrydzewski) add build finished
-// TODO(bradrydzewski) add build created
-// TODO(bradrydzewski) add build updated
-// TODO(bradrydzewski) add build version
-// TODO(bradrydzewski) add build created
 
 func createArgs(repo drone.Repo, build drone.Build) []starlark.Value {
 	return []starlark.Value{
@@ -47,7 +45,7 @@ func fromBuild(v drone.Build) starlark.StringDict {
 		"event":         starlark.String(v.Event),
 		"action":        starlark.String(v.Action),
 		"cron":          starlark.String(v.Cron),
-		"environent":    starlark.String(v.Deploy),
+		"environment":   starlark.String(v.Deploy),
 		"link":          starlark.String(v.Link),
 		"branch":        starlark.String(v.Target),
 		"source":        starlark.String(v.Source),
