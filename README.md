@@ -1,6 +1,6 @@
 __Deprecation Notice__
 
-Starlark support is natively available in Drone; use of this extension is no longer required.  See https://docs.drone.io/server/reference/drone-starlark-enabled/
+Starlark configuration support is natively available in Drone; use of this extension is no longer required.  See https://docs.drone.io/server/reference/drone-starlark-enabled/
 
 ---
 
