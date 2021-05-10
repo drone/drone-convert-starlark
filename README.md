@@ -1,4 +1,8 @@
-# drone-convert-starlark
+__Deprecation Notice__
+
+Starlark support is natively available in Drone; use of this extension is no longer required.  See https://docs.drone.io/server/reference/drone-starlark-enabled/
+
+---
 
 A conversion plugin that provides optional support for generating pipeline configuration files via Starlark scripting. _Please note this project requires Drone server version 1.4 or higher._
 
