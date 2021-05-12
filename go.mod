@@ -9,5 +9,5 @@ require (
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/sirupsen/logrus v1.4.2
 	github.com/stretchr/testify v1.3.0 // indirect
-	go.starlark.net v0.0.0-20190820173200-988906f77f65
+	go.starlark.net v0.0.0-20200306205701-8dd3e2ee1dd5
 )

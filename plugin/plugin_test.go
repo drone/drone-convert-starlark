@@ -250,3 +250,55 @@ func TestPlugin_Load_Unknown_Repo(t *testing.T) {
 		t.Error("expected ErrNoSuchRepo")
 	}
 }
+
+// Test that the fail builtin fails the build
+func TestPlugin_Fail(t *testing.T) {
+	req := &converter.Request{
+		Build: drone.Build{
+			After: "3d21ec53a331a6f037a91c368710b99387d012c1",
+		},
+		Repo: drone.Repo{
+			Slug:   "octocat/hello-world",
+			Config: ".drone.yml",
+		},
+	}
+
+	plugin := New(newTestRegistry(t))
+
+	config, err := plugin.Convert(noContext, req)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if config != nil {
+		t.Error("Want nil config when configuration is not starlark file")
+		return
+	}
+
+	before, err := ioutil.ReadFile("testdata/fail.star")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	after, err := ioutil.ReadFile("testdata/fail.error")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	req.Repo.Config = "fail.star"
+	req.Config.Data = string(before)
+	config, err = plugin.Convert(noContext, req)
+	if err == nil {
+		t.Error("expected error")
+		return
+	}
+	if config != nil {
+		t.Error("Want non-nil configuration")
+		return
+	}
+
+	if want, got := err.Error(), string(after); want != got {
+		t.Errorf("Want %q got %q", want, got)
+	}
+}
